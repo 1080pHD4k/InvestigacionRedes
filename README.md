@@ -1,5 +1,5 @@
 ## Lab 1 — Router IPv4 estático
-Stephanie Monge Ortiz
+Stephanie Monge Ortiz y
 Paula Sofía Grell Araya
 
 ### Requisitos
