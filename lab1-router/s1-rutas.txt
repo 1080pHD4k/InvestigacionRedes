@@ -1,0 +1,4 @@
+table_add ipv4_lpm reenviar_ipv4 10.0.1.0/24 => 00:00:00:01:01:00 08:00:00:00:01:11 1
+table_add ipv4_lpm reenviar_ipv4 10.0.2.0/24 => 00:00:00:01:02:00 00:00:00:02:01:00 2
+table_add ipv4_lpm reenviar_ipv4 10.0.3.0/24 => 00:00:00:01:02:00 00:00:00:02:01:00 2
+table_add ipv4_lpm reenviar_ipv4 10.0.4.0/24 => 00:00:00:01:02:00 00:00:00:02:01:00 2
