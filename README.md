@@ -8,6 +8,7 @@ Paula Sofía Grell Araya
 
 ### Cómo ejecutar
 1. Compilar el programa P4:
+       cd lab1-router
        p4c-bm2-ss --p4v 16 -o router.json router.p4
 2. Levantar la red:
        sudo python3 topology.py
@@ -17,18 +18,26 @@ Paula Sofía Grell Araya
 ### Pruebas
 - Conectividad:
       mininet> pingall           # debe dar un 0% dropped
-- Decremento de TTL (sale con 64, llega con 61 tras 3 routers):
-      mininet> h4 python3 test_scripts/recibir.py h4-eth0 &
-      mininet> h1 ping -c 1 10.0.4.4
+- Decremento de TTL (sale con 64, llega con 61 tras 3 routers). Se deja capturando a h4 y
+  su salida va a un archivo, porque Mininet no muestra la salida de procesos en segundo plano:
+      mininet> h4 python3 -u test_scripts/recibir.py h4-eth0 > /tmp/h4.txt 2>&1 &
+      mininet> h1 python3 test_scripts/enviar.py 10.0.4.4
+      mininet> sh cat /tmp/h4.txt      # "de 10.0.1.1 -> ttl 61"
+  (también se ve en `h1 ping -c 1 10.0.4.4`: la respuesta llega con ttl=61)
+- Descarte por TTL agotado (un router descarta lo que recibe con TTL <= 1; de h1 a h4 hay 3 routers):
+      mininet> h1 python3 test_scripts/enviar.py 10.0.4.4 1 4    # llega con ttl 1
+      mininet> h1 python3 test_scripts/enviar.py 10.0.4.4 1 3    # lo descarta s3, no llega
+      mininet> sh cat /tmp/h4.txt      # solo aparece el paquete con TTL 4
 - Descarte sin ruta:
       mininet> h1 ping -c 3 10.0.9.9   # debe dar un 100% packet loss
+- Al terminar:  mininet> h4 kill %python3
 
 ### Archivos
 - router.p4         programa del router
 - topology.py       topología Mininet
 - s1/s2/s3-rutas.txt  tablas LPM de cada router
 - cargar_rutas.sh   carga las tres tablas LPM
-- test_scripts/     enviar.py y recibir.py 
+- test_scripts/     enviar.py (ICMP con TTL configurable) y recibir.py (muestra el TTL que llega)
 
 
 ## Lab 2 — Contadores y estadísticas de tráfico

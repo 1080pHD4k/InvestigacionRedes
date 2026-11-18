@@ -3,6 +3,7 @@
  *
  * Qué hace el switch con cada paquete:
  *   1. Parsea Ethernet y, si el etherType es 0x0800, la cabecera IPv4.
+ *      Lo que no es IPv4 se descarta.
  *   2. Si el TTL ya no permite otro salto (TTL <= 1), descarta el paquete.
  *   3. Busca la IP destino en la tabla ipv4_lpm (Longest Prefix Match). Si hay ruta:
  *        - elige el puerto de salida,
@@ -136,6 +137,10 @@ control MiIngreso(inout headers hdr,
             } else {
                 ipv4_lpm.apply();
             }
+        } else {
+            /* Tramas que no son IPv4 (ARP, IPv6...): el router no las maneja.
+               Los hosts usan ARP estático hacia su gateway, así que no hacen falta. */
+            descartar();
         }
     }
 }
