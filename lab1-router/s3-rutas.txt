@@ -1,4 +1,11 @@
+# Rutas de s3 (thrift 9092). Las carga cargar_rutas.sh.
+# Formato: table_add ipv4_lpm reenviar_ipv4 <prefijo> => <MAC origen> <MAC siguiente salto> <puerto>
+# Puertos de s3: 1 -> s2, 2 -> h3, 3 -> h4
+
+# Hacia h1 y h2: por s2
 table_add ipv4_lpm reenviar_ipv4 10.0.1.0/24 => 00:00:00:03:01:00 00:00:00:02:03:00 1
 table_add ipv4_lpm reenviar_ipv4 10.0.2.0/24 => 00:00:00:03:01:00 00:00:00:02:03:00 1
+
+# Redes directamente conectadas: se entregan a h3 y h4
 table_add ipv4_lpm reenviar_ipv4 10.0.3.0/24 => 00:00:00:03:02:00 08:00:00:00:03:33 2
 table_add ipv4_lpm reenviar_ipv4 10.0.4.0/24 => 00:00:00:03:03:00 08:00:00:00:04:44 3

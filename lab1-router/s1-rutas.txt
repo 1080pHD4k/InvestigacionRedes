@@ -1,4 +1,11 @@
+# Rutas de s1 (thrift 9090). Las carga cargar_rutas.sh.
+# Formato: table_add ipv4_lpm reenviar_ipv4 <prefijo> => <MAC origen> <MAC siguiente salto> <puerto>
+# Puertos de s1: 1 -> h1, 2 -> s2
+
+# Red directamente conectada: se entrega a h1
 table_add ipv4_lpm reenviar_ipv4 10.0.1.0/24 => 00:00:00:01:01:00 08:00:00:00:01:11 1
+
+# Resto de subredes: todo sale por el puerto 2 hacia s2
 table_add ipv4_lpm reenviar_ipv4 10.0.2.0/24 => 00:00:00:01:02:00 00:00:00:02:01:00 2
 table_add ipv4_lpm reenviar_ipv4 10.0.3.0/24 => 00:00:00:01:02:00 00:00:00:02:01:00 2
 table_add ipv4_lpm reenviar_ipv4 10.0.4.0/24 => 00:00:00:01:02:00 00:00:00:02:01:00 2
