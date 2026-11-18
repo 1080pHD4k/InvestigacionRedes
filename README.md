@@ -29,3 +29,54 @@ Paula Sofía Grell Araya
 - s1/s2/s3-rutas.txt  tablas LPM de cada router
 - cargar_rutas.sh   carga las tres tablas LPM
 - test_scripts/     enviar.py y recibir.py 
+
+
+## Lab 2 — Contadores y estadísticas de tráfico
+Carpeta `lab2-counters/`. Topología: 1 switch P4 (s1) y 4 hosts (h1–h4, 10.0.0.1–10.0.0.4).
+
+### Qué implementa
+- Contador directo (`direct_counter`) por flujo IP origen + IP destino (tabla `flujos`).
+- Contador global por protocolo: TCP, UDP, ICMP y otros.
+- Registers con el tamaño de los paquetes: último, mínimo y máximo por flujo, más un histograma global.
+- Detección de flujos elefante: el switch acumula bytes por flujo y marca los que superan el umbral
+  (configurable, lo escribe el controlador en un register). El controlador además los anota en `elefantes.log`.
+- Controlador en Python (thrift vía `simple_switch_CLI`) que imprime todo cada 5 s.
+
+### Requisitos
+- p4c, BMv2, Mininet, Scapy, iperf e iptables
+
+### Cómo ejecutar
+1. Compilar:
+       cd lab2-counters
+       p4c-bm2-ss --p4v 16 -o counters.json counters.p4
+2. Levantar la red:
+       sudo python3 topology.py
+3. Cargar las tablas (reenvío + flujos):
+       mininet> sh bash cargar_tablas.sh
+4. En otra terminal, en `lab2-counters/`, iniciar el controlador:
+       sudo python3 controlador.py --reset              # cada 5 s, umbral 1 MB
+       sudo python3 controlador.py --umbral 500000      # otro umbral
+
+### Pruebas
+- Exactitud de los contadores (tráfico conocido con Scapy y comparación automática):
+      mininet> sh python3 controlador.py --reset --una-vez
+      mininet> h1 python3 trafico_scapy.py 10.0.0.2 --tcp 100 --udp 50 --icmp 30 --otros 20 --tam 200
+      mininet> h2 python3 trafico_scapy.py 10.0.0.3 --tcp 40 --udp 40 --tam 600 --anexar
+      mininet> sh python3 verificar.py      # debe decir que todos los contadores coinciden
+- Flujo elefante con iperf (h3 -> h4 aparece como ** ELEFANTE ** en el controlador):
+      mininet> h4 iperf -s &
+      mininet> h3 iperf -c 10.0.0.4 -t 10
+- Todo junto: `mininet> source demo_trafico.sh`
+
+Notas: para que la medición sea exacta, `topology.py` usa ARP estático, desactiva IPv6 en los hosts y
+bloquea con iptables el puerto 7777 y el protocolo 253, así el destino no responde al tráfico de prueba.
+
+### Archivos
+- counters.p4        programa P4 (contadores, registers, elefantes y reenvío)
+- topology.py        topología Mininet (1 switch, 4 hosts)
+- s1-tablas.txt      entradas de las tablas `reenvio` y `flujos`
+- cargar_tablas.sh   carga las tablas en s1
+- controlador.py     lectura periódica y presentación de estadísticas
+- trafico_scapy.py   generador de tráfico mixto con cantidades exactas
+- verificar.py       compara los contadores con el tráfico enviado
+- demo_trafico.sh    secuencia de comandos para la demo
