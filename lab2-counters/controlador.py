@@ -61,15 +61,24 @@ def ejecutar_cli(comandos, puerto):
     return r.stdout.replace("RuntimeCmd: ", "\n")
 
 
-RE_CONTADOR = re.compile(r"([\w.]+)\[(\d+)\]=\s*BmCounterValue\(packets=(\d+),\s*bytes=(\d+)\)")
+# counter_read imprime distinto según la versión de BMv2:
+#   nuevas:   MiIngreso.x[3]= (3276 bytes, 24 packets)
+#   antiguas: MiIngreso.x[3]=  BmCounterValue(packets=24, bytes=3276)
+RE_CONTADOR = re.compile(r"([\w.]+)\[(\d+)\]=\s*\((\d+) bytes,\s*(\d+) packets\)")
+RE_CONTADOR_ANTIGUO = re.compile(
+    r"([\w.]+)\[(\d+)\]=\s*BmCounterValue\(packets=(\d+),\s*bytes=(\d+)\)")
 RE_REGISTER = re.compile(r"^([\w.]+)=\s*([\d,\s]*)$", re.MULTILINE)
 RE_HANDLE = re.compile(r"Dumping entry (0x[0-9a-fA-F]+)")
 
 
 def leer_contadores(salida):
     """{(nombre, indice): (paquetes, bytes)} a partir de la salida de counter_read."""
-    return {(m.group(1), int(m.group(2))): (int(m.group(3)), int(m.group(4)))
-            for m in RE_CONTADOR.finditer(salida)}
+    contadores = {}
+    for m in RE_CONTADOR.finditer(salida):            # (bytes, packets)
+        contadores[(m.group(1), int(m.group(2)))] = (int(m.group(4)), int(m.group(3)))
+    for m in RE_CONTADOR_ANTIGUO.finditer(salida):    # (packets, bytes)
+        contadores[(m.group(1), int(m.group(2)))] = (int(m.group(3)), int(m.group(4)))
+    return contadores
 
 
 def leer_registers(salida):
